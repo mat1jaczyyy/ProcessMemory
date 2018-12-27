@@ -120,37 +120,25 @@ public class ProcessMemory {
         ? BitConverter.ToInt16(ReadByteArray(pOffset, 0x02), 0)
         : (short)0;
 
-    public short ReadShort(IntPtr pOffset) => ReadInt16(pOffset);
-
     public int ReadInt32(IntPtr pOffset) => CheckProcess()
         ? BitConverter.ToInt32(ReadByteArray(pOffset, 4u), 0)
         : 0;
-        
-    public int ReadInteger(IntPtr pOffset) => ReadInt32(pOffset);
 
     public long ReadInt64(IntPtr pOffset) => CheckProcess()
         ? BitConverter.ToInt64(ReadByteArray(pOffset, 8u), 0)
         : 0;
 
-    public long ReadLong(IntPtr pOffset) => ReadInt64(pOffset);
-
     public ushort ReadUInt16(IntPtr pOffset) => CheckProcess()
         ? BitConverter.ToUInt16(ReadByteArray(pOffset, 0x02), 0)
         : (ushort)0;
-
-    public ushort ReadUShort(IntPtr pOffset) => ReadUInt16(pOffset);
 
     public uint ReadUInt32(IntPtr pOffset) => CheckProcess()
         ? BitConverter.ToUInt32(ReadByteArray(pOffset, 4u), 0)
         : 0;
 
-    public uint ReadUInteger(IntPtr pOffset) => ReadUInt32(pOffset);
-
     public ulong ReadUInt64(IntPtr pOffset) => CheckProcess()
         ? BitConverter.ToUInt64(ReadByteArray(pOffset, 8u), 0)
         : 0;
-
-    public ulong ReadULong(IntPtr pOffset) => ReadUInt64(pOffset);
         
     public float ReadFloat(IntPtr pOffset) => CheckProcess()
         ? BitConverter.ToSingle(ReadByteArray(pOffset, 8u), 0)
@@ -172,27 +160,15 @@ public class ProcessMemory {
 
     public bool WriteInt16(IntPtr pOffset, short pData) => WriteByteArray(pOffset, BitConverter.GetBytes(pData));
 
-    public bool WriteShort(IntPtr pOffset, short pData) => WriteInt16(pOffset, pData);
-
     public bool WriteInt32(IntPtr pOffset, int pData) => WriteByteArray(pOffset, BitConverter.GetBytes(pData));
-
-    public bool WriteInteger(IntPtr pOffset, int pData) => WriteInt32(pOffset, pData);
 
     public bool WriteInt64(IntPtr pOffset, long pData) => WriteByteArray(pOffset, BitConverter.GetBytes(pData));
 
-    public bool WriteLong(IntPtr pOffset, long pData) => WriteInt64(pOffset, pData);
-
     public bool WriteUInt16(IntPtr pOffset, ushort pData) => WriteByteArray(pOffset, BitConverter.GetBytes(pData));
-
-    public bool WriteUShort(IntPtr pOffset, ushort pData) => WriteUInt16(pOffset, pData);
 
     public bool WriteUInt32(IntPtr pOffset, uint pData) => WriteByteArray(pOffset, BitConverter.GetBytes(pData));
 
-    public bool WriteUInteger(IntPtr pOffset, uint pData) => WriteUInt32(pOffset, pData);
-
     public bool WriteUInt64(IntPtr pOffset, ulong pData) => WriteByteArray(pOffset, BitConverter.GetBytes(pData));
-
-    public bool WriteULong(IntPtr pOffset, ulong pData) => WriteUInt64(pOffset, pData);
 
     public bool WriteFloat(IntPtr pOffset, float pData) => WriteByteArray(pOffset, BitConverter.GetBytes(pData));
 
