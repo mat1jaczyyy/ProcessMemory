@@ -36,18 +36,19 @@ public class ProcessMemory {
     }
 
     public string processName;
-    private bool _trust;
+    public bool TrustProcess;
+    private bool _opened;
     private ProcessModule processModule;
     private Process[] mainProcess;
     private IntPtr processHandle = IntPtr.Zero;
 
     public ProcessMemory(string param, bool trust = false) {
         processName = param;
-        _trust = trust;
+        TrustProcess = trust;
     }
 
     public bool CheckProcess() {
-        if (_trust) return true;
+        if (TrustProcess && _opened) return true;
         if (processName == null) return false;
 
         bool success = GetExitCodeProcess(processHandle, out uint code);
@@ -65,6 +66,7 @@ public class ProcessMemory {
             if (processHandle == IntPtr.Zero) return false;
         }
 
+        if (TrustProcess) _opened = true;
         return true;
     }
 
