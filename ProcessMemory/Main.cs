@@ -25,6 +25,15 @@ public class ProcessMemory {
     [DllImport("kernel32.dll", ExactSpelling = true, SetLastError = true)]
     private static extern IntPtr VirtualAllocEx(IntPtr hProcess, IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect); // unused?
 
+    [DllImport("kernel32.dll")]
+    private static extern IntPtr OpenThread(uint dwDesiredAccess, bool bInheritHandle, uint dwThreadId);
+
+    [DllImport("kernel32.dll")]
+    private static extern uint SuspendThread(IntPtr hThread);
+
+    [DllImport("kernel32.dll")]
+    private static extern int ResumeThread(IntPtr hThread);
+
     private IntPtr baseAddress;
     public long getBaseAddress {
         get {
@@ -68,6 +77,37 @@ public class ProcessMemory {
 
         if (TrustProcess) _opened = true;
         return true;
+    }
+
+    public void Suspend() {
+        foreach (ProcessThread pT in mainProcess[0].Threads) {
+            IntPtr pOpenThread = OpenThread(0x02 /* suspend/resume */, false, (uint)pT.Id);
+
+            if (pOpenThread == IntPtr.Zero) {
+                continue;
+            }
+
+            SuspendThread(pOpenThread);
+
+            CloseHandle(pOpenThread);
+        }
+    }
+
+    public void Resume() {
+        foreach (ProcessThread pT in mainProcess[0].Threads) {
+            IntPtr pOpenThread = OpenThread(0x02 /* suspend/resume */, false, (uint)pT.Id);
+
+            if (pOpenThread == IntPtr.Zero) {
+                continue;
+            }
+
+            var suspendCount = 0;
+            do {
+                suspendCount = ResumeThread(pOpenThread);
+            } while (suspendCount > 0);
+
+            CloseHandle(pOpenThread);
+        }
     }
 
     public byte[] ReadByteArray(IntPtr pOffset, uint pSize) {
