@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -215,4 +216,15 @@ public class ProcessMemory {
     public bool WriteFloat(IntPtr pOffset, float pData) => WriteByteArray(pOffset, BitConverter.GetBytes(pData));
 
     public bool WriteDouble(IntPtr pOffset, double pData) => WriteByteArray(pOffset, BitConverter.GetBytes(pData));
+
+    public IntPtr? Traverse(IntPtr pOffset, IEnumerable<long> offsets) {
+        if (pOffset == (IntPtr)0x0) return null;
+
+        foreach (long offset in offsets) {
+            pOffset = (IntPtr)(ReadInt64(pOffset) + offset);
+            if (pOffset == (IntPtr)0x0) return null;
+        }
+
+        return pOffset;
+    }
 }
