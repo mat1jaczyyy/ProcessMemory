@@ -11,6 +11,7 @@ namespace ProcessMemory.Test
     {
         static void Main(string[] args)
         {
+            // Puyo Puyo Tetris test
             Library.ProcessMemory processMemory = new Library.ProcessMemory("puyopuyotetris");
 
             string myName = processMemory.ReadStringUnicode(new IntPtr(0x14059B418), 36);

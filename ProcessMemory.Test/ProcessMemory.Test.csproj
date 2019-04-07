@@ -69,7 +69,7 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\ProcessMemory\ProcessMemory.Library.csproj">
+    <ProjectReference Include="..\ProcessMemory.Library\ProcessMemory.Library.csproj">
       <Project>{35b5c872-d829-428f-9dfa-8ef2b4de194c}</Project>
       <Name>ProcessMemory.Library</Name>
     </ProjectReference>
