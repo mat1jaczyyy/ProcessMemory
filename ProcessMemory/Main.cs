@@ -37,10 +37,12 @@ public class ProcessMemory {
     private IntPtr baseAddress;
     public long getBaseAddress {
         get {
-            baseAddress = (IntPtr)0;
-            processModule = mainProcess[0].MainModule;
-            baseAddress = processModule.BaseAddress;
-            return (long)baseAddress;
+            if (CheckProcess()) {
+                baseAddress = (IntPtr)0;
+                processModule = mainProcess[0].MainModule;
+                baseAddress = processModule.BaseAddress;
+                return (long)baseAddress;
+            } else return 0;
         }
     }
 
