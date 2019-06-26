@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -200,7 +201,7 @@ public class ProcessMemory {
 
     public bool WriteChar(IntPtr pOffset, char pData) => WriteByteArray(pOffset, BitConverter.GetBytes(pData));
 
-    public bool WriteByte(IntPtr pOffset, byte pData) => WriteByteArray(pOffset, BitConverter.GetBytes(pData));
+    public bool WriteByte(IntPtr pOffset, byte pData) => WriteByteArray(pOffset, BitConverter.GetBytes(pData).Take(1).ToArray());
 
     public bool WriteInt16(IntPtr pOffset, short pData) => WriteByteArray(pOffset, BitConverter.GetBytes(pData));
 
