@@ -1,6 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -214,4 +214,71 @@ public class ProcessMemory {
     public bool WriteFloat(IntPtr addr, float pData) => WriteByteArray(addr, BitConverter.GetBytes(pData));
 
     public bool WriteDouble(IntPtr addr, double pData) => WriteByteArray(addr, BitConverter.GetBytes(pData));
+
+    public bool Traverse(IntPtr addr, IEnumerable<int> offsets, out IntPtr result) {
+        result = addr;
+
+        if (!CheckProcess() || result == IntPtr.Zero) return false;
+
+        foreach (int offset in offsets) {
+            result = (IntPtr)ReadInt64(result);
+            if (result == IntPtr.Zero) return false;
+
+            result += offset;
+        }
+
+        return true;
+    }
+
+    public string TraverseStringUnicode(IntPtr addr, IEnumerable<int> offsets, uint size) => Traverse(addr, offsets, out IntPtr result)
+        ? ReadStringUnicode(result, size)
+        : null;
+
+    public string TraverseStringASCII(IntPtr addr, IEnumerable<int> offsets, uint size) => Traverse(addr, offsets, out IntPtr result)
+        ? ReadStringASCII(result, size)
+        : null;
+
+    public char? TraverseChar(IntPtr addr, IEnumerable<int> offsets) => Traverse(addr, offsets, out IntPtr result)
+        ? ReadChar(result)
+        : (char?)null;
+
+    public bool? TraverseBoolean(IntPtr addr, IEnumerable<int> offsets) => Traverse(addr, offsets, out IntPtr result)
+        ? ReadBoolean(result)
+        : (bool?)null;
+
+    public byte? TraverseByte(IntPtr addr, IEnumerable<int> offsets) => Traverse(addr, offsets, out IntPtr result)
+        ? ReadByte(result)
+        : (byte?)null;
+
+    public short? TraverseInt16(IntPtr addr, IEnumerable<int> offsets) => Traverse(addr, offsets, out IntPtr result)
+        ? ReadInt16(result)
+        : (short?)null;
+
+    public int? TraverseInt32(IntPtr addr, IEnumerable<int> offsets) => Traverse(addr, offsets, out IntPtr result)
+        ? ReadInt32(result)
+        : (int?)null;
+
+    public long? TraverseInt64(IntPtr addr, IEnumerable<int> offsets) => Traverse(addr, offsets, out IntPtr result)
+        ? ReadInt64(result)
+        : (long?)null;
+
+    public ushort? TraverseUInt16(IntPtr addr, IEnumerable<int> offsets) => Traverse(addr, offsets, out IntPtr result)
+        ? ReadUInt16(result)
+        : (ushort?)null;
+
+    public uint? TraverseUInt32(IntPtr addr, IEnumerable<int> offsets) => Traverse(addr, offsets, out IntPtr result)
+        ? ReadUInt32(result)
+        : (uint?)null;
+
+    public ulong? TraverseUInt64(IntPtr addr, IEnumerable<int> offsets) => Traverse(addr, offsets, out IntPtr result)
+        ? ReadUInt64(result)
+        : (ulong?)null;
+
+    public float? TraverseFloat(IntPtr addr, IEnumerable<int> offsets) => Traverse(addr, offsets, out IntPtr result)
+        ? ReadFloat(result)
+        : (float?)null;
+
+    public double? TraverseDouble(IntPtr addr, IEnumerable<int> offsets) => Traverse(addr, offsets, out IntPtr result)
+        ? ReadDouble(result)
+        : (double?)null;
 }
