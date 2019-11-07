@@ -63,9 +63,7 @@ public class ProcessMemory {
         if (TrustProcess && _opened) return true;
         if (processName == null) return false;
 
-        bool success = GetExitCodeProcess(processHandle, out uint code);
-
-        if (success && code != 259) {
+        if (GetExitCodeProcess(processHandle, out uint code) && code != 259) {
             CloseHandle(processHandle);
             processHandle = IntPtr.Zero;
         }
@@ -113,109 +111,107 @@ public class ProcessMemory {
         }
     }
 
-    public byte[] ReadByteArray(IntPtr pOffset, uint pSize) {
-        if (CheckProcess()) {
-            uint flNewProtect;
-            VirtualProtectEx(processHandle, pOffset, (UIntPtr)pSize, 0x04 /* rw */, out flNewProtect);
+    public byte[] ReadByteArray(IntPtr addr, uint size) {
+        if (!CheckProcess()) return new byte[0];
 
-            byte[] array = new byte[pSize];
-            ReadProcessMemory(processHandle, pOffset, array, pSize, 0u);
+        uint flNewProtect;
+        VirtualProtectEx(processHandle, addr, (UIntPtr)size, 0x04 /* rw */, out flNewProtect);
 
-            VirtualProtectEx(processHandle, pOffset, (UIntPtr)pSize, flNewProtect, out flNewProtect);
-            //CloseHandle(processHandle);
-            return array;
+        byte[] array = new byte[size];
+        ReadProcessMemory(processHandle, addr, array, size, 0u);
 
-        } else return new byte[1];
+        VirtualProtectEx(processHandle, addr, (UIntPtr)size, flNewProtect, out flNewProtect);
+        //CloseHandle(processHandle);
+        return array;
     }
 
-    public bool WriteByteArray(IntPtr pOffset, byte[] pBytes) {
-        if (CheckProcess()) {
-            uint flNewProtect;
-            VirtualProtectEx(processHandle, pOffset, (UIntPtr)pBytes.Length, 0x04 /* rw */, out flNewProtect);
-
-            bool flag = WriteProcessMemory(processHandle, pOffset, pBytes, (uint)pBytes.Length, 0u);
-
-            VirtualProtectEx(processHandle, pOffset, (UIntPtr)pBytes.Length, flNewProtect, out flNewProtect);
-            return flag;
-
-        } else return false;
-    }
-
-    public string ReadStringUnicode(IntPtr pOffset, uint pSize) => CheckProcess()
-        ? Encoding.Unicode.GetString(ReadByteArray(pOffset, pSize), 0, (int)pSize)
+    public string ReadStringUnicode(IntPtr addr, uint size) => CheckProcess()
+        ? Encoding.Unicode.GetString(ReadByteArray(addr, size), 0, (int)size)
         : "";
         
-    public string ReadStringASCII(IntPtr pOffset, uint pSize) => CheckProcess()
-        ? Encoding.ASCII.GetString(ReadByteArray(pOffset, pSize), 0, (int)pSize)
+    public string ReadStringASCII(IntPtr addr, uint size) => CheckProcess()
+        ? Encoding.ASCII.GetString(ReadByteArray(addr, size), 0, (int)size)
         : "";
         
-    public char ReadChar(IntPtr pOffset) => CheckProcess()
-        ? BitConverter.ToChar(ReadByteArray(pOffset, 0x01), 0)
+    public char ReadChar(IntPtr addr) => CheckProcess()
+        ? BitConverter.ToChar(ReadByteArray(addr, 1), 0)
         : ' ';
         
-    public bool ReadBoolean(IntPtr pOffset) => CheckProcess()
-        ? BitConverter.ToBoolean(ReadByteArray(pOffset, 0x01), 0)
+    public bool ReadBoolean(IntPtr addr) => CheckProcess()
+        ? BitConverter.ToBoolean(ReadByteArray(addr, 1), 0)
         : false;
 
-    public byte ReadByte(IntPtr pOffset) => CheckProcess()
-        ? ReadByteArray(pOffset, 0x01)[0]
+    public byte ReadByte(IntPtr addr) => CheckProcess()
+        ? ReadByteArray(addr, 1)[0]
         : (byte)0;
 
-    public short ReadInt16(IntPtr pOffset) => CheckProcess()
-        ? BitConverter.ToInt16(ReadByteArray(pOffset, 0x02), 0)
+    public short ReadInt16(IntPtr addr) => CheckProcess()
+        ? BitConverter.ToInt16(ReadByteArray(addr, 2), 0)
         : (short)0;
 
-    public int ReadInt32(IntPtr pOffset) => CheckProcess()
-        ? BitConverter.ToInt32(ReadByteArray(pOffset, 4u), 0)
+    public int ReadInt32(IntPtr addr) => CheckProcess()
+        ? BitConverter.ToInt32(ReadByteArray(addr, 4), 0)
         : 0;
 
-    public long ReadInt64(IntPtr pOffset) => CheckProcess()
-        ? BitConverter.ToInt64(ReadByteArray(pOffset, 8u), 0)
+    public long ReadInt64(IntPtr addr) => CheckProcess()
+        ? BitConverter.ToInt64(ReadByteArray(addr, 8), 0)
         : 0;
 
-    public ushort ReadUInt16(IntPtr pOffset) => CheckProcess()
-        ? BitConverter.ToUInt16(ReadByteArray(pOffset, 0x02), 0)
+    public ushort ReadUInt16(IntPtr addr) => CheckProcess()
+        ? BitConverter.ToUInt16(ReadByteArray(addr, 2), 0)
         : (ushort)0;
 
-    public uint ReadUInt32(IntPtr pOffset) => CheckProcess()
-        ? BitConverter.ToUInt32(ReadByteArray(pOffset, 4u), 0)
+    public uint ReadUInt32(IntPtr addr) => CheckProcess()
+        ? BitConverter.ToUInt32(ReadByteArray(addr, 4), 0)
         : 0;
 
-    public ulong ReadUInt64(IntPtr pOffset) => CheckProcess()
-        ? BitConverter.ToUInt64(ReadByteArray(pOffset, 8u), 0)
+    public ulong ReadUInt64(IntPtr addr) => CheckProcess()
+        ? BitConverter.ToUInt64(ReadByteArray(addr, 8), 0)
         : 0;
         
-    public float ReadFloat(IntPtr pOffset) => CheckProcess()
-        ? BitConverter.ToSingle(ReadByteArray(pOffset, 8u), 0)
+    public float ReadFloat(IntPtr addr) => CheckProcess()
+        ? BitConverter.ToSingle(ReadByteArray(addr, 4), 0)
         : 0f;
         
-    public double ReadDouble(IntPtr pOffset) => CheckProcess()
-        ? BitConverter.ToDouble(ReadByteArray(pOffset, 8u), 0)
+    public double ReadDouble(IntPtr addr) => CheckProcess()
+        ? BitConverter.ToDouble(ReadByteArray(addr, 8), 0)
         : 0.0;
+
+    public bool WriteByteArray(IntPtr addr, byte[] pBytes) {
+        if (!CheckProcess()) return false;
+
+        uint flNewProtect;
+        VirtualProtectEx(processHandle, addr, (UIntPtr)pBytes.Length, 0x04 /* rw */, out flNewProtect);
+
+        bool flag = WriteProcessMemory(processHandle, addr, pBytes, (uint)pBytes.Length, 0u);
+
+        VirtualProtectEx(processHandle, addr, (UIntPtr)pBytes.Length, flNewProtect, out flNewProtect);
+        return flag;
+    }
+
+    public bool WriteStringUnicode(IntPtr addr, string pData) => WriteByteArray(addr, Encoding.Unicode.GetBytes(pData));
+
+    public bool WriteStringASCII(IntPtr addr, string pData) => WriteByteArray(addr, Encoding.ASCII.GetBytes(pData));
         
-    public bool WriteStringUnicode(IntPtr pOffset, string pData) => WriteByteArray(pOffset, Encoding.Unicode.GetBytes(pData));
+    public bool WriteBoolean(IntPtr addr, bool pData) => WriteByteArray(addr, BitConverter.GetBytes(pData));
 
-    public bool WriteStringASCII(IntPtr pOffset, string pData) => WriteByteArray(pOffset, Encoding.ASCII.GetBytes(pData));
-        
-    public bool WriteBoolean(IntPtr pOffset, bool pData) => WriteByteArray(pOffset, BitConverter.GetBytes(pData));
+    public bool WriteChar(IntPtr addr, char pData) => WriteByteArray(addr, BitConverter.GetBytes(pData));
 
-    public bool WriteChar(IntPtr pOffset, char pData) => WriteByteArray(pOffset, BitConverter.GetBytes(pData));
+    public bool WriteByte(IntPtr addr, byte pData) => WriteByteArray(addr, new byte[] {pData});
 
-    public bool WriteByte(IntPtr pOffset, byte pData) => WriteByteArray(pOffset, BitConverter.GetBytes(pData).Take(1).ToArray());
+    public bool WriteInt16(IntPtr addr, short pData) => WriteByteArray(addr, BitConverter.GetBytes(pData));
 
-    public bool WriteInt16(IntPtr pOffset, short pData) => WriteByteArray(pOffset, BitConverter.GetBytes(pData));
+    public bool WriteInt32(IntPtr addr, int pData) => WriteByteArray(addr, BitConverter.GetBytes(pData));
 
-    public bool WriteInt32(IntPtr pOffset, int pData) => WriteByteArray(pOffset, BitConverter.GetBytes(pData));
+    public bool WriteInt64(IntPtr addr, long pData) => WriteByteArray(addr, BitConverter.GetBytes(pData));
 
-    public bool WriteInt64(IntPtr pOffset, long pData) => WriteByteArray(pOffset, BitConverter.GetBytes(pData));
+    public bool WriteUInt16(IntPtr addr, ushort pData) => WriteByteArray(addr, BitConverter.GetBytes(pData));
 
-    public bool WriteUInt16(IntPtr pOffset, ushort pData) => WriteByteArray(pOffset, BitConverter.GetBytes(pData));
+    public bool WriteUInt32(IntPtr addr, uint pData) => WriteByteArray(addr, BitConverter.GetBytes(pData));
 
-    public bool WriteUInt32(IntPtr pOffset, uint pData) => WriteByteArray(pOffset, BitConverter.GetBytes(pData));
+    public bool WriteUInt64(IntPtr addr, ulong pData) => WriteByteArray(addr, BitConverter.GetBytes(pData));
 
-    public bool WriteUInt64(IntPtr pOffset, ulong pData) => WriteByteArray(pOffset, BitConverter.GetBytes(pData));
+    public bool WriteFloat(IntPtr addr, float pData) => WriteByteArray(addr, BitConverter.GetBytes(pData));
 
-    public bool WriteFloat(IntPtr pOffset, float pData) => WriteByteArray(pOffset, BitConverter.GetBytes(pData));
-
-    public bool WriteDouble(IntPtr pOffset, double pData) => WriteByteArray(pOffset, BitConverter.GetBytes(pData));
+    public bool WriteDouble(IntPtr addr, double pData) => WriteByteArray(addr, BitConverter.GetBytes(pData));
 }
