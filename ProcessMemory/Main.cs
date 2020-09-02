@@ -114,13 +114,12 @@ public class ProcessMemory {
     public byte[] ReadByteArray(IntPtr addr, uint size) {
         if (!CheckProcess()) return new byte[0];
 
-        uint flNewProtect;
-        VirtualProtectEx(processHandle, addr, (UIntPtr)size, 0x04 /* rw */, out flNewProtect);
+        VirtualProtectEx(processHandle, addr, (UIntPtr)size, 0x40 /* rw */, out uint flNewProtect);
 
         byte[] array = new byte[size];
         ReadProcessMemory(processHandle, addr, array, size, 0u);
 
-        VirtualProtectEx(processHandle, addr, (UIntPtr)size, flNewProtect, out flNewProtect);
+        VirtualProtectEx(processHandle, addr, (UIntPtr)size, flNewProtect, out _);
         //CloseHandle(processHandle);
         return array;
     }
@@ -180,12 +179,12 @@ public class ProcessMemory {
     public bool WriteByteArray(IntPtr addr, byte[] pBytes) {
         if (!CheckProcess()) return false;
 
-        uint flNewProtect;
-        VirtualProtectEx(processHandle, addr, (UIntPtr)pBytes.Length, 0x04 /* rw */, out flNewProtect);
+        VirtualProtectEx(processHandle, addr, (UIntPtr)pBytes.Length, 0x40 /* rw */, out uint flNewProtect);
 
         bool flag = WriteProcessMemory(processHandle, addr, pBytes, (uint)pBytes.Length, 0u);
 
-        VirtualProtectEx(processHandle, addr, (UIntPtr)pBytes.Length, flNewProtect, out flNewProtect);
+        VirtualProtectEx(processHandle, addr, (UIntPtr)pBytes.Length, flNewProtect, out _);
+
         return flag;
     }
 
