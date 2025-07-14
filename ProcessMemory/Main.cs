@@ -23,8 +23,25 @@ public class ProcessMemory {
     [DllImport("kernel32.dll")]
     private static extern bool VirtualProtectEx(IntPtr hProcess, IntPtr lpAddress, UIntPtr dwSize, uint flNewProtect, out uint lpflOldProtect);
 
+    [StructLayout(LayoutKind.Sequential)]
+    private struct MEMORY_BASIC_INFORMATION {
+        public IntPtr BaseAddress;
+        public IntPtr AllocationBase;
+        public uint AllocationProtect;
+        public UIntPtr RegionSize;
+        public uint State;
+        public uint Protect;
+        public uint Type;
+    }
+
     [DllImport("kernel32.dll", ExactSpelling = true, SetLastError = true)]
-    private static extern IntPtr VirtualAllocEx(IntPtr hProcess, IntPtr lpAddress, uint dwSize, uint flAllocationType, uint flProtect); // unused?
+    private static extern UIntPtr VirtualQueryEx(IntPtr hProcess, IntPtr lpAddress, out MEMORY_BASIC_INFORMATION lpBuffer, UIntPtr dwLength);
+
+    [DllImport("kernel32.dll", ExactSpelling = true, SetLastError = true)]
+    private static extern IntPtr VirtualAllocEx(IntPtr hProcess, IntPtr lpAddress, UIntPtr dwSize, uint flAllocationType, uint flProtect);
+
+    [DllImport("kernel32.dll", ExactSpelling = true, SetLastError = true)]
+    private static extern bool VirtualFreeEx(IntPtr hProcess, IntPtr lpAddress, UIntPtr dwSize, uint dwFreeType);
 
     [DllImport("kernel32.dll")]
     private static extern IntPtr OpenThread(uint dwDesiredAccess, bool bInheritHandle, uint dwThreadId);
@@ -122,6 +139,55 @@ public class ProcessMemory {
         VirtualProtectEx(processHandle, addr, (UIntPtr)size, flNewProtect, out _);
         //CloseHandle(processHandle);
         return array;
+    }
+
+    /// <summary>
+    /// Allocates memory in the target process.
+    /// </summary>
+    /// <returns>IntPtr.Zero if failed, valid pointer otherwise.</returns>
+    public IntPtr VirtualAlloc(UIntPtr size) {
+        if (!CheckProcess()) return IntPtr.Zero;
+
+        const long a = 0x10000; // Allocation Granularity
+        ulong addr = (ulong)baseAddress.ToInt64();
+
+        while (true) {
+            if (
+                VirtualQueryEx(
+                    processHandle,
+                    (IntPtr)addr,
+                    out MEMORY_BASIC_INFORMATION mbi,
+                    (UIntPtr)Marshal.SizeOf<MEMORY_BASIC_INFORMATION>()
+                ) == UIntPtr.Zero
+                || mbi.RegionSize == UIntPtr.Zero) {
+                // no more regions or error
+                break;
+            }
+
+            // If region is free and large enough, allocate at its base + allocation granularity (64KB)
+            IntPtr allocAddr = new IntPtr((mbi.BaseAddress.ToInt64() + a - 1) / a * a);
+            if (mbi.State == 0x10000 /* MEM_FREE */ && mbi.RegionSize.ToUInt64() - (ulong)allocAddr.ToInt64() + (ulong)mbi.BaseAddress.ToInt64() >= size.ToUInt64()) {
+                IntPtr p = VirtualAllocEx(processHandle, allocAddr, size, 0x1000 | 0x2000 /* MEM_COMMIT OR MEM_RESERVE */, 0x40 /* EXECUTE_READWRITE */);
+
+                if (p != IntPtr.Zero)
+                    return p;
+            }
+
+            // Move to the next region
+            addr = (ulong)mbi.BaseAddress.ToInt64() + mbi.RegionSize.ToUInt64();
+        }
+
+        // Fallback: Alloc anywhere
+
+        return VirtualAllocEx(processHandle, IntPtr.Zero, size, 0x1000 | 0x2000 /* MEM_COMMIT OR MEM_RESERVE */, 0x40 /* EXECUTE_READWRITE */);
+    }
+
+    /// <summary>
+    /// Frees memory allocated by VirtualAlloc in the target process. Tries to allocate near the base address of the process.
+    /// </summary>
+    public bool VirtualFree(IntPtr lpAddress) {
+        if (!CheckProcess()) return false;
+        return VirtualFreeEx(processHandle, lpAddress, UIntPtr.Zero, 0x8000 /* MEM_RELEASE */);
     }
 
     public string ReadStringUnicode(IntPtr addr, uint size) => CheckProcess()
