@@ -319,6 +319,10 @@ public class ProcessMemory {
         return true;
     }
 
+    public byte[] TraverseByteArray(IntPtr addr, IEnumerable<int> offsets, uint size) => Traverse(addr, offsets, out IntPtr result)
+        ? ReadByteArray(result, size)
+        : null;
+
     public string TraverseStringUnicode(IntPtr addr, IEnumerable<int> offsets, uint size) => Traverse(addr, offsets, out IntPtr result)
         ? ReadStringUnicode(result, size)
         : null;
