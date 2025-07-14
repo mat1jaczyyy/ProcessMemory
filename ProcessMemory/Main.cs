@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -189,6 +190,29 @@ public class ProcessMemory {
         if (!CheckProcess()) return false;
         return VirtualFreeEx(processHandle, lpAddress, UIntPtr.Zero, 0x8000 /* MEM_RELEASE */);
     }
+
+    /// <summary>
+    /// Writes a custom jump instruction, auto calculates relative offset for you
+    /// </summary>
+    public bool WriteHook(IntPtr addr, byte[] instruction, IntPtr target) {
+        int relative = (int)((long)target - (long)addr - instruction.Length - 4);
+        return WriteByteArray(addr, instruction.Concat(BitConverter.GetBytes(relative)).ToArray());
+    }
+
+    public bool Writex64CALL(IntPtr addr, IntPtr target)
+        => WriteHook(addr, new byte[] { 0xE8 }, target);
+
+    public bool Writex64JMP(IntPtr addr, IntPtr target)
+        => WriteHook(addr, new byte[] { 0xE9 }, target);
+
+    public bool Writex64JNE(IntPtr addr, IntPtr target)
+        => WriteHook(addr, new byte[] { 0x0F, 0x85 }, target);
+
+    public bool Writex64JE(IntPtr addr, IntPtr target)
+        => WriteHook(addr, new byte[] { 0x0F, 0x84 }, target);
+
+    public bool Writex64JS(IntPtr addr, IntPtr target)
+        => WriteHook(addr, new byte[] { 0x0F, 0x88 }, target);
 
     public string ReadStringUnicode(IntPtr addr, uint size) => CheckProcess()
         ? Encoding.Unicode.GetString(ReadByteArray(addr, size), 0, (int)size)
