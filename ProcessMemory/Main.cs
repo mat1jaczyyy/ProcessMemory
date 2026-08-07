@@ -7,7 +7,7 @@ using System.Text;
 
 public class ProcessMemory {
     [DllImport("kernel32.dll", SetLastError = true)]
-    private static extern bool ReadProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, byte[] lpBuffer, uint dwSize, uint lpNumberOfBytesRead);
+    private static extern bool ReadProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, byte[] lpBuffer, uint dwSize, out UIntPtr lpNumberOfBytesRead);
 
     [DllImport("kernel32.dll")]
     private static extern bool WriteProcessMemory(IntPtr hProcess, IntPtr lpBaseAddress, byte[] lpBuffer, uint nSize, uint lpNumberOfBytesWritten);
@@ -131,15 +131,34 @@ public class ProcessMemory {
 
     public byte[] ReadByteArray(IntPtr addr, uint size) {
         if (!CheckProcess()) return new byte[0];
-
-        VirtualProtectEx(processHandle, addr, (UIntPtr)size, 0x40 /* rw */, out uint flNewProtect);
+        if (size == 0) return new byte[0];
 
         byte[] array = new byte[size];
-        ReadProcessMemory(processHandle, addr, array, size, 0u);
+        return ReadProcessMemory(processHandle, addr, array, size, out UIntPtr bytesRead)
+            && bytesRead.ToUInt64() == size
+                ? array
+                : new byte[0];
+    }
 
-        VirtualProtectEx(processHandle, addr, (UIntPtr)size, flNewProtect, out _);
-        //CloseHandle(processHandle);
-        return array;
+    public IntPtr FindPattern(IntPtr addr, uint size, IReadOnlyList<byte?> pattern) {
+        if (pattern == null) throw new ArgumentNullException(nameof(pattern));
+        if (pattern.Count == 0) throw new ArgumentException("Pattern must not be empty.", nameof(pattern));
+
+        byte[] source = ReadByteArray(addr, size);
+        if (source.Length < pattern.Count) return IntPtr.Zero;
+
+        for (int offset = 0; offset <= source.Length - pattern.Count; offset++) {
+            bool matches = true;
+            for (int index = 0; index < pattern.Count; index++) {
+                byte? expected = pattern[index];
+                if (expected.HasValue && source[offset + index] != expected.Value) {
+                    matches = false;
+                    break;
+                }
+            }
+            if (matches) return new IntPtr(checked(addr.ToInt64() + offset));
+        }
+        return IntPtr.Zero;
     }
 
     /// <summary>
