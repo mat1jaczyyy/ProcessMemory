@@ -2,12 +2,12 @@
 
 ProcessMemory is a small Windows x64 library for reading, writing, allocating, and traversing memory in another process.
 
-Version 1.3 targets .NET Framework 4.7.2. The public API remains compatible with ProcessMemory 1.2.1. The current development source makes reads non-invasive and adds wildcard signature scanning; these changes have not been released to NuGet yet.
+Version 1.4 targets .NET Framework 4.7.2. It keeps the established read/write API, makes reads non-invasive, requires complete reads, and adds wildcard signature scanning.
 
 ## Install
 
 ```powershell
-dotnet add package ProcessMemory --version 1.3.0
+dotnet add package ProcessMemory --version 1.4.0
 ```
 
 The consuming application must run as x64 and may require elevated permissions to open its target process.
